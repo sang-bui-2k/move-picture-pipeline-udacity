@@ -76,8 +76,9 @@ jobs:
       env:
         IMAGE_TAG: ${{ github.sha }}
         REPO_URI: ${{ vars.BACKEND_ECR_URI }}
+        REACT_APP_MOVIE_API_URL: ${{ vars.REACT_APP_MOVIE_API_URL }}
       run: |
-        docker build --tag $REPO_URI:$IMAGE_TAG .
+        docker build --build-arg=REACT_APP_MOVIE_API_URL=$REACT_APP_MOVIE_API_URL --tag $REPO_URI:$IMAGE_TAG .
         docker push $REPO_URI:$IMAGE_TAG
 
     - name: Configure Kubeconfig
