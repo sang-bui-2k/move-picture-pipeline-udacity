@@ -1,0 +1,62 @@
+name: Continuous Integration - Back End
+
+on:
+  pull_request:
+    branches:
+    - main
+    paths:
+    - 'starter/backend/**'
+  workflow_dispatch:
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        py-version: ["3.10"]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Use Python ${{ matrix.py-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.py-version }}
+    - name: Install dependencies
+      run: |
+        pip install pipenv
+        pipenv install --system --deploy
+        pip install flake8
+      working-directory: ./starter/backend
+    - name: Lint
+      run: pipenv run lint
+      working-directory: ./starter/backend
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        py-version: ["3.10"]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Use Python ${{ matrix.py-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.py-version }}
+    - name: Install dependencies
+      run: |
+        pip install pipenv
+        pipenv install --system --deploy
+      working-directory: ./starter/backend
+    - name: Test
+      run: pipenv run test
+      working-directory: ./starter/backend
+
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Build from Docker
+      run: docker build -t mp-backend:latest .
+      working-directory: ./starter/backend
