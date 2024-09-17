@@ -14,6 +14,9 @@ RUN npm ci
 # Copy code
 COPY . .
 
+# Browserslist: caniuse-lite is outdated. Need to update latest
+RUN npx update-browserslist-db@latest
+
 # Build the app
 RUN npm run build
 
