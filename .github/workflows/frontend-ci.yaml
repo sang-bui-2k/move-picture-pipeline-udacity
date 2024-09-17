@@ -16,20 +16,12 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    - name: Cache Node.js modules
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.npm
-          ./starter/frontend/node_modules
-        key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('starter/frontend/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-${{ matrix.node-version }}-
-          ${{ runner.os }}-node-
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: starter/frontend/package-lock.json
     - name: Install dependencies
       run: npm install
       working-directory: ./starter/frontend
@@ -45,20 +37,12 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    - name: Cache Node.js modules
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.npm
-          ./starter/frontend/node_modules
-        key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('starter/frontend/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-${{ matrix.node-version }}-
-          ${{ runner.os }}-node-
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: starter/frontend/package-lock.json
     - name: Install dependencies
       run: npm install
       working-directory: ./starter/frontend
@@ -75,17 +59,9 @@ jobs:
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
-        node-version: 18.14
-    - name: Cache Node.js modules
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.npm
-          ./starter/frontend/node_modules
-        key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('starter/frontend/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-${{ matrix.node-version }}-
-          ${{ runner.os }}-node-
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: starter/frontend/package-lock.json
     - name: Install dependencies
       run: npm install
       working-directory: ./starter/frontend
