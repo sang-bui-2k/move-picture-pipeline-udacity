@@ -1,0 +1,57 @@
+name: Frontend Continuous Integration
+
+on:
+  pull_request:
+    branches:
+    - main
+    paths:
+    - 'starter/frontend/**'
+  workflow_dispatch:
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.14]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Install dependencies
+      run: npm install
+      working-directory: ./starter/frontend
+    - name: Lint
+      run: npm run lint
+      working-directory: ./starter/frontend
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.14]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Install dependencies
+      run: npm install
+      working-directory: ./starter/frontend
+    - name: Test
+      run: npm test
+      working-directory: ./starter/frontend
+
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Build from Docker
+      run: docker build -t mp-frontend:latest .
+      working-directory: ./starter/frontend

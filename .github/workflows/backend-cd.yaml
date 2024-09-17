@@ -1,0 +1,96 @@
+name: Backend Continuous Deployment
+
+on:
+  pull_request:
+    branches:
+    - main
+    paths:
+    - 'starter/backend/**'
+  workflow_dispatch:
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        py-version: ["3.10"]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Use Python ${{ matrix.py-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.py-version }}
+    - name: Install dependencies
+      run: |
+        pip install pipenv
+        pipenv install --system --deploy
+        pip install flake8
+      working-directory: ./starter/backend
+    - name: Lint
+      run: pipenv run lint
+      working-directory: ./starter/backend
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        py-version: ["3.10"]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Use Python ${{ matrix.py-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.py-version }}
+    - name: Install dependencies
+      run: |
+        pip install pipenv
+        pipenv install --system --deploy
+      working-directory: ./starter/backend
+    - name: Test
+      run: pipenv run test
+      working-directory: ./starter/backend
+
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
+        aws-region: us-east-1
+
+    - name: Login to Amazon
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build and Push Docker Image
+      working-directory: starter/backend
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+        REPO_URI: ${{ vars.BACKEND_ECR_URI }}
+        REACT_APP_MOVIE_API_URL: ${{ vars.REACT_APP_MOVIE_API_URL }}
+      run: |
+        docker build --build-arg=REACT_APP_MOVIE_API_URL=$REACT_APP_MOVIE_API_URL --tag $REPO_URI:$IMAGE_TAG .
+        docker push $REPO_URI:$IMAGE_TAG
+
+    - name: Configure Kubeconfig
+      env:
+        EKS_NAME: ${{ vars.BACKEND_EKS_NAME }}
+      run: aws eks update-kubeconfig --name $EKS_NAME --region us-east-1
+
+    - name: Deploy Docker Image to Amazon EKS
+      working-directory: starter/backend/k8s
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+        REPO_URI: ${{ vars.BACKEND_ECR_URI }}
+      run: |
+        kustomize edit set image backend=$REPO_URI:$IMAGE_TAG
+        kustomize build | kubectl apply -f -
